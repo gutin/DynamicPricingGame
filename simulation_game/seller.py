@@ -2,7 +2,8 @@ from abc import ABCMeta
 from abc import abstractmethod
 
 import signal
-import numpy as np
+import sys
+import traceback
 
 EXECUTION_TIME_LIMIT_IN_SECONDS = 2
 
@@ -17,15 +18,20 @@ class Seller(object):
     """
     __metaclass__ = ABCMeta
 
+    def __init__(self):
+        self.time_out = False
+
     def get_price(self, t, inventory_h, price_h, price_scale, horizon, num_buyers):
         # Limit execution time of the pricing function to 1 second
         signal.signal(signal.SIGALRM, signal_handler)
         signal.alarm(EXECUTION_TIME_LIMIT_IN_SECONDS)
         try:
             return self._get_price_impl(t, inventory_h, price_h, price_scale, horizon, num_buyers)
-        except Exception:
-            print "Execution timed out!"
-            return np.inf
+        except Exception as e:
+            print "Exception thrown in seller {0}!".format(self.get_name())
+            print traceback.print_exc(file=sys.stdout)
+            self.time_out = True
+            return 1e7
 
     @abstractmethod
     def _get_price_impl(self, t, inventory_h, price_h, price_scale, horizon, num_buyers):

@@ -18,9 +18,9 @@ class Buyer(object):
     __metaclass__ = ABCMeta
 
     def __init__(self):
-        self.purchase_history = []
+        self.time_out = False
 
-    def get_decision(self, t, inventory_h, price_h, reserve_price, b_t_1_n, horizon, num_buyers):
+    def get_decision(self, t, inventory_h, price_h, reserve_price, b_t_1_n, horizon, num_buyers, purchase_history):
         """
         Queries the buyer for its willingness to buy the product given the information below
         :param t: the current time
@@ -30,10 +30,11 @@ class Buyer(object):
         :param b_t_1_n: binary flag for whether the seller bought in the previous time step
         :param horizon: the 'T' parameter
         :param num_buyers: number of buyers in every round
+        :param purchase_history:
         :return: 1 if this buyer intends to buy the product now, else 0
         """
-        self.purchase_history.append(b_t_1_n)
-        if sum(self.purchase_history) >= 1:
+        purchase_history.append(b_t_1_n)
+        if sum(purchase_history) >= 1:
             # if the buyer bought one item already, then we prevent him from doing so again
             return 0
 
@@ -42,8 +43,9 @@ class Buyer(object):
         signal.alarm(EXECUTION_TIME_LIMIT_IN_SECONDS)
         try:
             return self._get_decision_impl(t, inventory_h, price_h, reserve_price, b_t_1_n, horizon, num_buyers)
-        except Exception:
-            print "Execution timed out for buyer", self.get_name()
+        except Exception as e:
+            print "Exception caught for buyer", self.get_name()
+            self.time_out = True
             return 0
 
     @abstractmethod
